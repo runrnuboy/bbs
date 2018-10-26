@@ -1,6 +1,21 @@
+from math import ceil
+
 from django.shortcuts import render, redirect
 
 from post.models import Post
+
+
+def post_list(request):
+    page = int(request.GET.get('page', 1))  # 当前页码
+    per_page = 10                           # 每页文章数
+    total = Post.objects.count()            # 帖子总数
+    pages = ceil(total / per_page)          # 总页数
+
+    start = (page - 1) * 10
+    end = start + 10
+    posts = Post.objects.all()[start:end]
+    return render(request, 'post_list.html',
+                  {'posts': posts, 'pages': range(pages)})
 
 
 def create_post(request):
@@ -33,8 +48,6 @@ def read_post(request):
 
 
 def delete_post(request):
-    return render(request, 'delete_post.html', {})
-
-
-def post_list(request):
-    return render(request, 'post_list.html', {})
+    post_id = int(request.GET.get('post_id'))
+    Post.objects.get(pk=post_id).delete()
+    return redirect('/')
