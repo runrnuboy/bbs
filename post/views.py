@@ -13,11 +13,20 @@ def create_post(request):
 
 
 def edit_post(request):
-    return render(request, 'edit_post.html', {})
+    if request.method == 'POST':
+        post_id = int(request.POST.get('post_id'))
+        post = Post.objects.get(pk=post_id)
+        post.title = request.POST.get('title').strip()
+        post.content = request.POST.get('content').strip()
+        post.save()
+        return redirect('/post/read/?post_id=%s' % post.id)
+    else:
+        post_id = int(request.GET.get('post_id'))
+        post = Post.objects.get(pk=post_id)
+        return render(request, 'edit_post.html', {'post': post})
 
 
 def read_post(request):
-    raise
     post_id = int(request.GET.get('post_id'))
     post = Post.objects.get(pk=post_id)
     return render(request, 'read_post.html', {'post': post})
