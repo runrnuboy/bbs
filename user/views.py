@@ -1,8 +1,14 @@
+import logging
+
 from django.shortcuts import render, redirect
 from django.contrib.auth.hashers import make_password, check_password
 
 from user.models import User
 from user.forms import RegisterForm
+from common.http import render_json
+
+inf_log = logging.getLogger('inf')
+err_log = logging.getLogger('err')
 
 
 def register(request):
@@ -27,7 +33,8 @@ def login(request):
         # 取出用户数据
         try:
             user = User.objects.get(nickname=nickname)
-        except User.DoesNotExist:
+        except User.DoesNotExist as e:
+            err_log.error(e)
             return render(request, 'login.html', {'error': '用户不存在'})
 
         # 检查用户密码
@@ -35,8 +42,10 @@ def login(request):
             request.session['uid'] = user.id
             request.session['nickname'] = user.nickname
             request.session['avatar'] = user.icon.url
+            inf_log.info('%s login' % user.nickname)
             return redirect('/user/info/')
         else:
+            err_log.error('%s password error' % user.nickname)
             return render(request, 'login.html', {'error': '密码错误'})
     return render(request, 'login.html')
 
@@ -49,4 +58,5 @@ def logout(request):
 def user_info(request):
     uid = request.session['uid']
     user = User.objects.get(pk=uid)
-    return render(request, 'user_info.html', {'user': user})
+
+    return render_json(user.to_dict())

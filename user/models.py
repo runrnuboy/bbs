@@ -13,3 +13,11 @@ class User(models.Model):
     icon = models.ImageField()
     sex = models.CharField(max_length=8, choices=SEX)
     age = models.IntegerField()
+
+    def to_dict(self):
+        return {
+            'nickname': self.nickname,
+            'icon': self.icon.url,
+            'sex': self.sex,
+            'age': self.age,
+        }
