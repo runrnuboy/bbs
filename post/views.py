@@ -4,8 +4,10 @@ from django.core.cache import cache
 from django.shortcuts import render, redirect
 
 from post.models import Post
+from post.helper import page_cache
 
 
+@page_cache
 def post_list(request):
     page = int(request.GET.get('page', 1))  # 当前页码
     per_page = 10                           # 每页文章数
