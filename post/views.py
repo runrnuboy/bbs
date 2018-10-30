@@ -1,5 +1,6 @@
 from math import ceil
 
+from django.core.cache import cache
 from django.shortcuts import render, redirect
 
 from post.models import Post
@@ -34,6 +35,10 @@ def edit_post(request):
         post.title = request.POST.get('title').strip()
         post.content = request.POST.get('content').strip()
         post.save()
+
+        # 更新缓存
+        key = 'Post-%s' % post_id
+        cache.set(key, post)
         return redirect('/post/read/?post_id=%s' % post.id)
     else:
         post_id = int(request.GET.get('post_id'))
@@ -43,7 +48,14 @@ def edit_post(request):
 
 def read_post(request):
     post_id = int(request.GET.get('post_id'))
-    post = Post.objects.get(pk=post_id)
+    key = 'Post-%s' % post_id
+    post = cache.get(key)  # 先从缓存里取数据
+    print('get from cache: %s' % post)
+    if post is None:
+        post = Post.objects.get(pk=post_id)  # 缓存里没有，直接从数据库获取数据
+        print('get from db: %s' % post)
+        cache.set(key, post)                 # 将数据存入缓存，方便以后使用
+        print('set data into cache')
     return render(request, 'read_post.html', {'post': post})
 
 
