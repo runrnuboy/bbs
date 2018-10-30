@@ -3,8 +3,10 @@ from math import ceil
 from django.core.cache import cache
 from django.shortcuts import render, redirect
 
+from common import rds
 from post.models import Post
 from post.helper import page_cache
+from post.helper import get_top_n
 
 
 @page_cache
@@ -58,6 +60,9 @@ def read_post(request):
         print('get from db: %s' % post)
         cache.set(key, post)                 # 将数据存入缓存，方便以后使用
         print('set data into cache')
+
+    rds.zincrby('ReadCounter', post_id)  # 增加文章阅读计数
+
     return render(request, 'read_post.html', {'post': post})
 
 
@@ -65,3 +70,14 @@ def delete_post(request):
     post_id = int(request.GET.get('post_id'))
     Post.objects.get(pk=post_id).delete()
     return redirect('/')
+
+
+def top10(request):
+    '''显示阅读量最高的前 10 篇文章'''
+    # rank_data = [
+    #     [<Post(10)>, 30],
+    #     [<Post(21)>, 19],
+    #     [<Post(15)>,  7],
+    # ]
+    rank_data = get_top_n(10)
+    return render(request, 'top10.html', {'rank_data': rank_data})
